@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./test.db
+      DEMO_USER_TOKEN: test-user-token
+      DEMO_ADMIN_TOKEN: test-admin-token
+      DEMO_SESSION_SECRET: test-session-secret-minimum-32-characters
+      OPENAI_API_KEY: test-openai-key
+      OPENAI_MODEL: gpt-4.1-mini
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma db push
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run build
